@@ -23,6 +23,13 @@ import android.widget.Toast;
 
 import fitnessapps.spacerayders.data.GlobalState;
 
+/**
+ * This activity is ran during the actual game play. It extends the
+ * RemoteServiceClient which is used to bind to another app used for
+ * monitoring and recording the Accelerometer data. RemoteServiceClient extends
+ * the BluetoothActivity class which gives this class access to all of the 
+ * necessary methods to use Bluetooth successfully.
+ */ 
 public class DevicesTrackerActivity extends RemoteServiceClient {
 
 	private Intent loadScore;
@@ -53,6 +60,7 @@ public class DevicesTrackerActivity extends RemoteServiceClient {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.devices);
+		// Adds the flag to keep the app awake during game play
 		getWindow().addFlags(LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
@@ -66,9 +74,9 @@ public class DevicesTrackerActivity extends RemoteServiceClient {
 	}
 
 	private void init() {
-		initSound();
-		resetScore();
-		setPlayerList();
+		initSound(); // sets up the sound effects for the gameplay
+		resetScore(); 
+		setPlayerList(); // sets the order of the player list up
 		setIntents();
 
 		gameStart(); // binds to accelerometer service if it exists
@@ -77,9 +85,14 @@ public class DevicesTrackerActivity extends RemoteServiceClient {
 		initScoreItems(START_SCORE);
 		
 		setAdapter(); // must be called before discovarableAccepeted();
-		setUpBluetooth();
+		setUpBluetooth(); // enables bluetooth and prompts the user
 	}
 	
+	/**
+	 * After the user is prompted to enable bluetooth and start discovery mode 
+	 * this method handles the request that comes back. Once enabling and 
+	 * discovering is confirmed then setItOrder() is called.
+	 */ 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	    // Check which request we're responding to
@@ -105,6 +118,12 @@ public class DevicesTrackerActivity extends RemoteServiceClient {
 		GlobalState.myScore = START_SCORE;
 	}
 
+        /**
+         * Uses the current minute (1 - 60) to create a unique order 
+         * for the player list. Dividing the minute by 5 gives the option
+         * of 12 different ordered lists. These lists were created in the 
+         * SplashActivity for reference.
+         */ 
 	private void setPlayerList() {
 		Calendar c = Calendar.getInstance();
 		int itOrderIndex = c.get(Calendar.MINUTE) / 5;
@@ -116,7 +135,11 @@ public class DevicesTrackerActivity extends RemoteServiceClient {
 		loadScore = new Intent(this, FinalScoreActivity.class);
 		startIntent = new Intent(this, SplashActivity.class);
 	}
-
+        /**
+         * The interval is set to be approximately one minute. This restriction
+         * is due to Bluetooth only being able to be discoverable for 5 minutes
+         * with Android 2.0.1. Since there are 5 players this interval time works.
+         */ 
 	private void setItOrder() {
 		//int length = playerList.length;
 		int interval = 62000; //(GAME_DURATION / length) * 1000;
@@ -140,7 +163,9 @@ public class DevicesTrackerActivity extends RemoteServiceClient {
 			setNextIt();
 		}
 	}
-
+        /**
+         * Sets the scheduler that changes who is it every minute.
+         */ 
 	private void setItScheduling(int interval) {
 		itScheduler = new Timer();
 		itTask = new ChangeItTask();
